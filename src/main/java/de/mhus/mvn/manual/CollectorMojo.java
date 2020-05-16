@@ -24,7 +24,7 @@ import de.mhus.lib.core.logging.Log;
 
 @Mojo(
         name = "collect",
-        defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         inheritByDefault = false,
         threadSafe = false,
@@ -38,7 +38,7 @@ public class CollectorMojo extends AbstractMojo {
 	private long timestamp;
 	
 	@Parameter
-	public String[] extensions = new String[] {".java"};
+	public String[] extensions = new String[] {"java"};
 	
 	@Parameter
 	public String[] start = new String[] {"java"};
@@ -151,7 +151,7 @@ public class CollectorMojo extends AbstractMojo {
 				parseDir(d, start);
 			if (d.isFile() && !d.getName().startsWith(".")) {
 				for (String ext : extensions) {
-					if (d.getName().endsWith(ext)) {
+					if (d.getName().endsWith("."+ext)) {
 						parseFile(d, start);
 						continue;
 					}
