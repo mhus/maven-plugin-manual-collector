@@ -78,6 +78,12 @@ public class CollectorMojo extends AbstractMojo {
 	
 	@Parameter
 	public String indexLine = "include::{{_file}}[]";
+
+	@Parameter
+	public String textHeader = "";
+	
+	@Parameter
+	public String textFooter = "";
 	
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -111,12 +117,12 @@ public class CollectorMojo extends AbstractMojo {
 				list.put(prop.getString("sort", "") + "_" + file.getName(), prop);
 			}
 		}
-		StringBuilder out = new StringBuilder().append(indexHeader).append("\n");
+		StringBuilder out = new StringBuilder().append(removeQuots(indexHeader)).append("\n");
 		for (Entry<String, MProperties> entry : list.entrySet()) {
-			String line = placeholdersManual(entry.getValue(), indexLine);
+			String line = placeholdersManual(entry.getValue(), removeQuots(indexLine));
 			out.append(line).append("\n");
 		}
-		out.append(indexFooter);
+		out.append(removeQuots(indexFooter));
 		File indexFile = new File(dir,indexFileName);
 		MFile.writeFile(indexFile, out.toString());
 	}
@@ -186,7 +192,7 @@ public class CollectorMojo extends AbstractMojo {
 		prop.setString("file.ident", MFile.getFileNameOnly(file.getName()));
 		prop.setString("file.path", file.getAbsolutePath().substring(start.getAbsolutePath().length()));
 		prop.setString("file.start", start.getPath());
-		StringBuilder text = new StringBuilder();
+		StringBuilder text = new StringBuilder().append(removeQuots(textHeader));
 		boolean header = true;
 		for (String line : lines) {
 			line = line.trim();
@@ -205,7 +211,7 @@ public class CollectorMojo extends AbstractMojo {
 			}
 		}
 		content = null;
-		
+		text.append(removeQuots(textFooter));
 		saveManual(prop, placeholdersManual(prop, text.toString()));
 		
 	}
@@ -265,4 +271,10 @@ public class CollectorMojo extends AbstractMojo {
 		}
 	}
 
+	private String removeQuots(String in) {
+		if (in == null) return null;
+		if (in.startsWith("\"") && in.endsWith("\""))
+			return in.substring(1, in.length()-1);
+		return in;
+	}
 }
