@@ -1,0 +1,6 @@
+.classpath
+.project
+.settings/
+target/
+.externalToolBuilders/
+dependency-reduced-pom.xml
