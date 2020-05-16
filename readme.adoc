@@ -1,0 +1,14 @@
+
+
+			<plugin>
+			    <groupId>de.mhus.mvn.plugin</groupId>
+				<version>1.0.0-SNAPSHOT</version>
+				<artifactId>manual-collector-maven-plugin</artifactId>
+				<configuration>
+					<outputDirectory>manual/categories</outputDirectory>
+					<cleanupOutputDirectory>true</cleanupOutputDirectory>
+					<generateIndexFiles>true</generateIndexFiles>
+				</configuration>
+			</plugin>
+
+mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.0.0-SNAPSHOT:collect 

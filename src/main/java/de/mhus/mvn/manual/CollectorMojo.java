@@ -27,7 +27,11 @@ import de.mhus.lib.core.logging.Log;
         defaultPhase = LifecyclePhase.PROCESS_CLASSES,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         inheritByDefault = false,
-        threadSafe = false)
+        threadSafe = false,
+        requiresProject = true, 
+        requiresDirectInvocation = true, 
+        aggregator = true
+		)
 public class CollectorMojo extends AbstractMojo {
 
 	private static Log log = Log.getLog(CollectorMojo.class);
@@ -55,13 +59,16 @@ public class CollectorMojo extends AbstractMojo {
 	public String outputDirectory;
 	
 	@Parameter
-	public String outputExtension = ".adoc";
+	public String outputExtension = "adoc";
 	
 	@Parameter
-	public boolean CleanupOutputDirectory = false;
+	public boolean cleanupOutputDirectory = false;
 	
 	@Parameter
 	public boolean generateIndexFiles = false;
+	
+	@Parameter
+	public String indexFileName = "index.adoc";
 	
 	@Parameter
 	public String indexHeader = "";
@@ -75,9 +82,10 @@ public class CollectorMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		timestamp = System.currentTimeMillis();
-		File root = project.getFile();
+		File root = new File(".");
 		
-		if (CleanupOutputDirectory)
+		
+		if (cleanupOutputDirectory)
 			deleteOutputDirectory();
 		
 		findStart(root);
@@ -109,7 +117,7 @@ public class CollectorMojo extends AbstractMojo {
 			out.append(line).append("\n");
 		}
 		out.append(indexFooter);
-		File indexFile = new File(dir,"index." + outputExtension);
+		File indexFile = new File(dir,indexFileName);
 		MFile.writeFile(indexFile, out.toString());
 	}
 
@@ -120,6 +128,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void findStart(File dir) {
+		log.i("findStart",dir);
 		if (MCollection.contains(exclude, dir.getName())) {
 			log.d("ignore",dir);
 			return;
@@ -136,6 +145,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseDir(File dir, File start) {
+		log.i("parseDir",dir);
 		for (File d : dir.listFiles()) {
 			if (d.isDirectory() && !d.getName().startsWith("."))
 				parseDir(d, start);
@@ -151,6 +161,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseFile(File file, File start) {
+		log.i("parseFile",file);
 		String content = MFile.readFile(file);
 		while (true) {
 			int begin = content.indexOf("/*#");
@@ -168,6 +179,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseManual(String content, File file, File start) {
+		log.i("parseManual",content);
 		String[] lines = content.split("\n");
 		MProperties prop = new MProperties();
 		prop.setString("file.name", file.getName());
@@ -183,7 +195,7 @@ public class CollectorMojo extends AbstractMojo {
 					header = false;
 			}
 			if (header) {
-				String[] parts = line.split(":",2);
+				String[] parts = line.substring(2).split(":",2);
 				if (parts.length == 2)
 					prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
 			} else {
@@ -244,6 +256,7 @@ public class CollectorMojo extends AbstractMojo {
 		File dir = new File(outputDirectory, MFile.normalize(category));
 		dir.mkdirs();
 		File file = new File(dir,fileName);
+		log.i("saveManual",file);
 		MFile.writeFile(file, text);
 		try {
 			prop.save(new File(dir, fileName + ".properties"));
