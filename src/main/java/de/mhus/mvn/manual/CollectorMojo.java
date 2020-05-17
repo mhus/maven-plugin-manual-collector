@@ -34,7 +34,7 @@ import de.mhus.lib.core.logging.Log;
 		)
 public class CollectorMojo extends AbstractMojo {
 
-	private Log log = new MagenPluginLog(this);
+	private Log log = new MavenPluginLog(this);
 	private long timestamp;
 	
 	@Parameter
