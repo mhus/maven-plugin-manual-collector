@@ -34,14 +34,14 @@ import de.mhus.lib.core.logging.Log;
 		)
 public class CollectorMojo extends AbstractMojo {
 
-	private static Log log = Log.getLog(CollectorMojo.class);
+	private Log log = new MagenPluginLog(this);
 	private long timestamp;
 	
 	@Parameter
 	public String[] extensions = new String[] {"java"};
 	
 	@Parameter
-	public String[] start = new String[] {"java"};
+	public String[] start = new String[] {"src/main/java"};
 	
 	@Parameter
 	public String[] exclude = new String[] {"bin","target","test"};
@@ -85,10 +85,13 @@ public class CollectorMojo extends AbstractMojo {
 	@Parameter
 	public String textFooter = "";
 	
+	@Parameter
+	public String rootDirectory = ".";
+	
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		timestamp = System.currentTimeMillis();
-		File root = new File(".");
+		File root = new File(rootDirectory);
 		
 		
 		if (cleanupOutputDirectory)
@@ -134,15 +137,18 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void findStart(File dir) {
-		log.i("findStart",dir);
+		log.d("findStart",dir);
 		if (MCollection.contains(exclude, dir.getName())) {
 			log.d("ignore",dir);
 			return;
 		}
-		if (MCollection.contains(start, dir.getName())) {
-			log.d("start",dir);
-			parseDir(dir, dir);
-			return;
+		String dirPath = dir.getPath().replace('\\', '/');
+		for (String s : start) {
+			if (dirPath.endsWith(s)) {
+				log.d("start",dir);
+				parseDir(dir, dir);
+				return;
+			}
 		}
 		for (File d : dir.listFiles()) {
 			if (d.isDirectory() && !d.getName().startsWith("."))
@@ -151,7 +157,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseDir(File dir, File start) {
-		log.i("parseDir",dir);
+		log.d("parseDir",dir);
 		for (File d : dir.listFiles()) {
 			if (d.isDirectory() && !d.getName().startsWith("."))
 				parseDir(d, start);
@@ -167,7 +173,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseFile(File file, File start) {
-		log.i("parseFile",file);
+		log.d("parseFile",file);
 		String content = MFile.readFile(file);
 		while (true) {
 			int begin = content.indexOf("/*#");
@@ -185,7 +191,7 @@ public class CollectorMojo extends AbstractMojo {
 	}
 
 	private void parseManual(String content, File file, File start) {
-		log.i("parseManual",content);
+		log.d("parseManual",content);
 		String[] lines = content.split("\n");
 		MProperties prop = new MProperties();
 		prop.setString("file.name", file.getName());
