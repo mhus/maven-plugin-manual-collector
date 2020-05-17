@@ -127,11 +127,13 @@ public class CollectorMojo extends AbstractMojo {
 		}
 		out.append(removeQuots(indexFooter));
 		File indexFile = new File(dir,indexFileName);
+		log.i("index",indexFile);
 		MFile.writeFile(indexFile, out.toString());
 	}
 
 	private void deleteOutputDirectory() {
 		File dir = new File(outputDirectory);
+		log.i("delete",dir);
 		MFile.deleteDir(dir);
 		dir.mkdirs();
 	}
@@ -195,7 +197,6 @@ public class CollectorMojo extends AbstractMojo {
 		String[] lines = content.split("\n");
 		MProperties prop = new MProperties();
 		prop.setString("file.name", file.getName());
-		prop.setString("file.ident", MFile.getFileNameOnly(file.getName()));
 		prop.setString("file.path", file.getAbsolutePath().substring(start.getAbsolutePath().length()));
 		prop.setString("file.start", start.getPath());
 		StringBuilder text = new StringBuilder().append(removeQuots(textHeader));
@@ -216,9 +217,10 @@ public class CollectorMojo extends AbstractMojo {
 				text.append(line).append('\n');
 			}
 		}
+		prop.setString("file.ident", MFile.getFileNameOnly(file.getName()) + prop.getString("suffix", ""));
 		content = null;
 		text.append(removeQuots(textFooter));
-		saveManual(prop, placeholdersManual(prop, text.toString()));
+		createManual(prop, placeholdersManual(prop, text.toString()));
 		
 	}
 
@@ -256,7 +258,7 @@ public class CollectorMojo extends AbstractMojo {
 		return null;
 	}
 
-	private void saveManual(MProperties prop, String text) {
+	private void createManual(MProperties prop, String text) {
 		
 		String category = prop.getString("category", null);
 		if (category == null) {
@@ -268,7 +270,7 @@ public class CollectorMojo extends AbstractMojo {
 		File dir = new File(outputDirectory, MFile.normalize(category));
 		dir.mkdirs();
 		File file = new File(dir,fileName);
-		log.i("saveManual",file);
+		log.i("create",file);
 		MFile.writeFile(file, text);
 		try {
 			prop.save(new File(dir, fileName + ".properties"));
