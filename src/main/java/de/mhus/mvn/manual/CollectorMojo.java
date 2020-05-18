@@ -76,6 +76,9 @@ public class CollectorMojo extends AbstractMojo {
 	@Parameter
 	public String indexFooter = "";
 	
+    @Parameter
+    public String indexOrderBy = "sort";
+    
 	@Parameter
 	public String indexLine = "include::{{_file}}[]";
 
@@ -117,7 +120,7 @@ public class CollectorMojo extends AbstractMojo {
 			if (file.isFile() && file.getName().endsWith("."+outputExtension)) {
 				MProperties prop = MProperties.load(new File(file.getPath() + ".properties"));
 				prop.setString("_file", file.getName());
-				list.put(prop.getString("sort", "") + "_" + file.getName(), prop);
+				list.put(prop.getString(indexOrderBy, "") + "_" + file.getName(), prop);
 			}
 		}
 		StringBuilder out = new StringBuilder().append(removeQuots(indexHeader)).append("\n");
@@ -189,7 +192,6 @@ public class CollectorMojo extends AbstractMojo {
 			content = content.substring(end+2);
 			parseManual(part, file, start);
 		}
-		
 	}
 
 	private void parseManual(String content, File file, File start) {
