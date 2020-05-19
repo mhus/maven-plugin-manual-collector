@@ -81,13 +81,13 @@ public class CollectorMojo extends AbstractMojo {
     public String indexOrderBy = "sort";
     
 	@Parameter
-	public String indexLine = "include::{{_file}}[]";
+	public String indexLine = "include::{{_file}}[]\n\n";
 
 	@Parameter
-	public String textHeader = "";
+	public String textHeader = "\n\n";
 	
 	@Parameter
-	public String textFooter = "";
+	public String textFooter = "\n\n";
 	
 	@Parameter
 	public String rootDirectory = ".";
@@ -139,10 +139,10 @@ public class CollectorMojo extends AbstractMojo {
 				list.put(prop.getString(indexOrderBy, "") + "_" + file.getName(), prop);
 			}
 		}
-		StringBuilder out = new StringBuilder().append(removeQuots(indexHeader)).append("\n");
+		StringBuilder out = new StringBuilder().append(removeQuots(indexHeader));
 		for (Entry<String, MProperties> entry : list.entrySet()) {
 			String line = placeholdersManual(entry.getValue(), removeQuots(indexLine));
-			out.append(line).append("\n");
+			out.append(line);
 		}
 		out.append(removeQuots(indexFooter));
 		File indexFile = new File(dir,indexFileName);
@@ -222,6 +222,7 @@ public class CollectorMojo extends AbstractMojo {
 		StringBuilder text = new StringBuilder().append(removeQuots(textHeader));
 		boolean header = true;
 		boolean first = true;
+		boolean startWithBlockLine = true;
 		String type = null;
 		for (String line : lines) {
 			line = line.trim();
@@ -244,8 +245,11 @@ public class CollectorMojo extends AbstractMojo {
 					if (parts.length == 2)
 						prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
 				} else {
-					if (line.startsWith(blockLine ))
+					if (startWithBlockLine && line.startsWith(blockLine ))
 						line = line.substring(blockLine.length()).trim();
+					else
+						startWithBlockLine = false;
+					
 					for (String s : blockIgnore)
 						if (line.startsWith(s))
 							continue;
