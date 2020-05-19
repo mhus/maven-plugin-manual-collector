@@ -15,6 +15,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import de.mhus.lib.core.MCast;
 import de.mhus.lib.core.MCollection;
 import de.mhus.lib.core.MDate;
 import de.mhus.lib.core.MFile;
@@ -90,6 +91,21 @@ public class CollectorMojo extends AbstractMojo {
 	
 	@Parameter
 	public String rootDirectory = ".";
+	
+	@Parameter
+	private String blockStart = "/*#";
+	
+	@Parameter
+	private String blockEnd = "*/";
+	
+	@Parameter
+	private String blockHeader = "*#";
+
+	@Parameter
+	private String blockLine = "*";
+	
+	@Parameter
+	private String[] blockIgnore = new String[0];
 	
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -180,21 +196,23 @@ public class CollectorMojo extends AbstractMojo {
 	private void parseFile(File file, File start) {
 		log.d("parseFile",file);
 		String content = MFile.readFile(file);
+		int cnt = 0;
 		while (true) {
-			int begin = content.indexOf("/*#");
+			int begin = content.indexOf(blockStart );
 			if (begin < 0) return;
-			int end = content.indexOf("*/", begin+3);
+			int end = content.indexOf(blockEnd , begin+3);
 			if (end < 0) {
 				log.w("start without end token");
 				return;
 			}
-			String part = content.substring(begin+1, end);
-			content = content.substring(end+2);
-			parseManual(part, file, start);
+			String part = content.substring(begin+blockStart.length(), end);
+			content = content.substring(end+blockEnd.length());
+			parseManual(part, file, start, cnt);
+			cnt++;
 		}
 	}
 
-	private void parseManual(String content, File file, File start) {
+	private void parseManual(String content, File file, File start, int cnt) {
 		log.d("parseManual",content);
 		String[] lines = content.split("\n");
 		MProperties prop = new MProperties();
@@ -203,27 +221,47 @@ public class CollectorMojo extends AbstractMojo {
 		prop.setString("file.start", start.getPath());
 		StringBuilder text = new StringBuilder().append(removeQuots(textHeader));
 		boolean header = true;
+		boolean first = true;
+		String type = null;
 		for (String line : lines) {
 			line = line.trim();
-			if (header) {
-				if (!line.startsWith("*#"))
-					header = false;
-			}
-			if (header) {
-				String[] parts = line.substring(2).split(":",2);
-				if (parts.length == 2)
-					prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
+			if (first) {
+				String[] parts = line.split(" ");
+				if (parts.length < 2) {
+					log.e("malformed header line",line);
+					return;
+				}
+				type = parts[0].trim().toLowerCase();
+				prop.put("category", parts[1].trim());
+				first = false;
 			} else {
-				if (line.startsWith("*"))
-					line = line.substring(1).trim();
-				text.append(line).append('\n');
+				if (header) {
+					if (!line.startsWith(blockHeader ))
+						header = false;
+				}
+				if (header) {
+					String[] parts = line.substring(blockHeader.length()).split(":",2);
+					if (parts.length == 2)
+						prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
+				} else {
+					if (line.startsWith(blockLine ))
+						line = line.substring(blockLine.length()).trim();
+					for (String s : blockIgnore)
+						if (line.startsWith(s))
+							continue;
+					text.append(line).append('\n');
+				}
 			}
 		}
-		prop.setString("file.ident", MFile.getFileNameOnly(file.getName()) + prop.getString("suffix", ""));
+		prop.setString("file.ident", MFile.getFileNameOnly(file.getName()) + prop.getString("suffix", MCast.toString(cnt, 4)));
 		content = null;
 		text.append(removeQuots(textFooter));
-		createManual(prop, placeholdersManual(prop, text.toString()));
-		
+		if ("man".equals(type) || "manual".equals(type))
+			createManual(prop, placeholdersManual(prop, text.toString()));
+		else {
+			log.e("wrong type",type);
+		}
+			
 	}
 
 	private String placeholdersManual(MProperties prop, String text) {
