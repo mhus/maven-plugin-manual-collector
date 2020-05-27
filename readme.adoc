@@ -11,4 +11,10 @@
 				</configuration>
 			</plugin>
 
-mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.0.0-SNAPSHOT:collect 
+mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.1.0-SNAPSHOT:collect 
+
+					<fileTypes>
+						<fileType>
+							<extension>cpp</extension>
+						</fileType>
+					</fileTypes>

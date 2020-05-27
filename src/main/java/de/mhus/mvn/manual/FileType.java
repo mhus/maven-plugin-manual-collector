@@ -22,4 +22,7 @@ public class FileType {
 
     @Parameter public String[] blockIgnore = new String[0];
 
+    public String toString() {
+    	return extension + " -> [" + blockStart + "," + blockEnd + "," + blockHeader + "]";
+    }
 }

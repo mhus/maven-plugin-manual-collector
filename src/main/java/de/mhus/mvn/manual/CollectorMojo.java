@@ -15,6 +15,7 @@ package de.mhus.mvn.manual;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -50,7 +51,7 @@ public class CollectorMojo extends AbstractMojo {
     private Log log = new MavenPluginLog(this);
     private long timestamp;
 
-    @Parameter public FileType[] fileTypes = new FileType[] { new FileType("java") };
+    @Parameter public FileType[] fileTypes = null;
 
     @Parameter public String[] start = new String[] {"src/main/java"};
 
@@ -90,6 +91,12 @@ public class CollectorMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+    	
+    	getLog().debug("FileTypes: " + Arrays.toString(fileTypes));
+    	
+    	if (fileTypes == null)
+    		fileTypes = new FileType[] { new FileType("java") };
+    	
         timestamp = System.currentTimeMillis();
         File root = new File(rootDirectory);
 
