@@ -50,7 +50,7 @@ public class CollectorMojo extends AbstractMojo {
     private Log log = new MavenPluginLog(this);
     private long timestamp;
 
-    @Parameter public String[] extensions = new String[] {"java"};
+    @Parameter public FileType[] fileTypes = new FileType[] { new FileType("java") };
 
     @Parameter public String[] start = new String[] {"src/main/java"};
 
@@ -87,16 +87,6 @@ public class CollectorMojo extends AbstractMojo {
     @Parameter public String textFooter = "";
 
     @Parameter public String rootDirectory = ".";
-
-    @Parameter private String blockStart = "/*#";
-
-    @Parameter private String blockEnd = "*/";
-
-    @Parameter private String blockHeader = "*#";
-
-    @Parameter private String blockLine = "*";
-
-    @Parameter private String[] blockIgnore = new String[0];
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -169,9 +159,9 @@ public class CollectorMojo extends AbstractMojo {
         for (File d : dir.listFiles()) {
             if (d.isDirectory() && !d.getName().startsWith(".")) parseDir(d, start);
             if (d.isFile() && !d.getName().startsWith(".")) {
-                for (String ext : extensions) {
-                    if (d.getName().endsWith("." + ext)) {
-                        parseFile(d, start);
+                for (FileType fileType : fileTypes) {
+                    if (d.getName().endsWith("." + fileType.extension)) {
+                        parseFile(d, start, fileType);
                         continue;
                     }
                 }
@@ -179,26 +169,26 @@ public class CollectorMojo extends AbstractMojo {
         }
     }
 
-    private void parseFile(File file, File start) {
+    private void parseFile(File file, File start, FileType fileType) {
         log.d("parseFile", file);
         String content = MFile.readFile(file);
         int cnt = 0;
         while (true) {
-            int begin = content.indexOf(blockStart);
+            int begin = content.indexOf(fileType.blockStart);
             if (begin < 0) return;
-            int end = content.indexOf(blockEnd, begin + 3);
+            int end = content.indexOf(fileType.blockEnd, begin + 3);
             if (end < 0) {
                 log.w("start without end token");
                 return;
             }
-            String part = content.substring(begin + blockStart.length(), end);
-            content = content.substring(end + blockEnd.length());
-            parseManual(part, file, start, cnt);
+            String part = content.substring(begin + fileType.blockStart.length(), end);
+            content = content.substring(end + fileType.blockEnd.length());
+            parseManual(part, file, start, cnt, fileType);
             cnt++;
         }
     }
 
-    private void parseManual(String content, File file, File start, int cnt) {
+    private void parseManual(String content, File file, File start, int cnt, FileType fileType) {
         log.d("parseManual", content);
         String[] lines = content.split("\n");
         MProperties prop = new MProperties();
@@ -223,16 +213,16 @@ public class CollectorMojo extends AbstractMojo {
                 first = false;
             } else {
                 if (header) {
-                    if (!line.startsWith(blockHeader)) header = false;
+                    if (!line.startsWith(fileType.blockHeader)) header = false;
                 }
                 if (header) {
-                    String[] parts = line.substring(blockHeader.length()).split(":", 2);
+                    String[] parts = line.substring(fileType.blockHeader.length()).split(":", 2);
                     if (parts.length == 2)
                         prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
                 } else {
-                    if (line.startsWith(blockLine))
-                        line = line.substring(blockLine.length()).trim();
-                    for (String s : blockIgnore) if (line.startsWith(s)) continue;
+                    if (line.startsWith(fileType.blockLine))
+                        line = line.substring(fileType.blockLine.length()).trim();
+                    for (String s : fileType.blockIgnore) if (line.startsWith(s)) continue;
                     text.append(line).append('\n');
                 }
             }
@@ -295,7 +285,7 @@ public class CollectorMojo extends AbstractMojo {
         log.i("create", file);
         MFile.writeFile(file, text);
         try {
-            prop.save(new File(dir, fileName + ".properties"));
+            prop.save(new File(dir, fileName + ".properties"), false);
         } catch (IOException e) {
             log.e(file, e);
         }
