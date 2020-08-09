@@ -1,5 +1,10 @@
 
 
+== Definition
+
+Add the plugin section into your maven pom file:
+
+----
 			<plugin>
 			    <groupId>de.mhus.mvn.plugin</groupId>
 				<version>1.0.0-SNAPSHOT</version>
@@ -10,11 +15,25 @@
 					<generateIndexFiles>true</generateIndexFiles>
 				</configuration>
 			</plugin>
+----
+
+== Execute manually
+
+Use the following line to execute the goal manually:
+
+----
 
 mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.1.0-SNAPSHOT:collect 
 
+----
+
+== Extended configuration
+
+
+----
 					<fileTypes>
 						<fileType>
 							<extension>cpp</extension>
 						</fileType>
 					</fileTypes>
+----
