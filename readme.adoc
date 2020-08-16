@@ -7,7 +7,7 @@ Add the plugin section into your maven pom file:
 ----
 			<plugin>
 			    <groupId>de.mhus.mvn.plugin</groupId>
-				<version>1.0.0-SNAPSHOT</version>
+				<version>1.1.0</version>
 				<artifactId>manual-collector-maven-plugin</artifactId>
 				<configuration>
 					<outputDirectory>manual/categories</outputDirectory>
@@ -23,7 +23,7 @@ Use the following line to execute the goal manually:
 
 ----
 
-mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.1.0-SNAPSHOT:collect 
+mvn de.mhus.mvn.plugin:manual-collector-maven-plugin:1.1.0:collect 
 
 ----
 
