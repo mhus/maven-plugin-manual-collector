@@ -12,11 +12,11 @@ public class FileType {
 	
 	@Parameter public String extension = null;
 	
-    @Parameter public String blockStart = "/*#";
+    @Parameter public String blockStart = "/*@";
 
     @Parameter public String blockEnd = "*/";
 
-    @Parameter public String blockHeader = "*#";
+    @Parameter public String blockHeader = "*@";
 
     @Parameter public String blockLine = "*";
 
