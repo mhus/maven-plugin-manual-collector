@@ -185,8 +185,7 @@ public class CollectorMojo extends AbstractMojo {
         	fw.write(concatFooter.replace("\\n", "\n"));
         	
         } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+        	log.e(e);
 		}
         StringBuilder out = new StringBuilder().append(removeQuots(indexHeader)).append("\n");
         out.append(removeQuots(indexFooter));
