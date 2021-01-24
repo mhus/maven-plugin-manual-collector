@@ -14,6 +14,8 @@
 package de.mhus.mvn.manual;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
@@ -89,6 +91,16 @@ public class CollectorMojo extends AbstractMojo {
 
     @Parameter public String rootDirectory = ".";
 
+    @Parameter public boolean generateConcatFiles = false;
+    
+    @Parameter public String concatFileName = "concat.adoc";
+    
+    @Parameter public String concatHeader = "::toc::\n\n";
+    
+    @Parameter public String concatFooter = "";
+    
+    @Parameter public String concatOrderBy = "sort";
+    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
     	
@@ -105,6 +117,9 @@ public class CollectorMojo extends AbstractMojo {
         findStart(root);
 
         if (generateIndexFiles) generateIndexFiles();
+        
+        if (generateConcatFiles) generateConcatFiles();
+
     }
 
     private void generateIndexFiles() {
@@ -135,6 +150,51 @@ public class CollectorMojo extends AbstractMojo {
         MFile.writeFile(indexFile, out.toString());
     }
 
+    private void generateConcatFiles() {
+        for (File dir : new File(outputDirectory).listFiles()) {
+            if (dir.isDirectory() && !dir.getName().startsWith(".")) {
+                generateConcatFile(dir);
+            }
+        }
+    }
+
+    private void generateConcatFile(File dir) {
+        TreeMap<String, MProperties> list = new TreeMap<>();
+        for (File file : dir.listFiles()) {
+            if (file.isFile() && file.getName().endsWith("." + outputExtension)) {
+                MProperties prop = MProperties.load(new File(file.getPath() + ".properties"));
+                prop.setProperty("_file", file);
+                list.put(prop.getString(concatOrderBy, "") + "_" + file.getName(), prop);
+            }
+        }
+        
+        File concatFile = new File(dir, concatFileName);
+        log.i("concat", concatFile);
+        try (FileWriter fw = new FileWriter(concatFile)) {
+        	
+        	fw.write(concatHeader.replace("\\n", "\n"));
+        	
+        	for (Entry<String, MProperties> entry : list.entrySet()) {
+        		File file = (File) entry.getValue().getProperty("_file");
+        		try (FileReader fr = new FileReader(file)) {
+        			MFile.copyFile(fr, fw);
+        		}
+        		fw.write("\n\n");
+        	}
+        	
+        	fw.write(concatFooter.replace("\\n", "\n"));
+        	
+        } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        StringBuilder out = new StringBuilder().append(removeQuots(indexHeader)).append("\n");
+        out.append(removeQuots(indexFooter));
+        File indexFile = new File(dir, indexFileName);
+        log.i("index", indexFile);
+        MFile.writeFile(indexFile, out.toString());
+    }
+    
     private void deleteOutputDirectory() {
         File dir = new File(outputDirectory);
         log.i("delete", dir);
@@ -206,7 +266,6 @@ public class CollectorMojo extends AbstractMojo {
         StringBuilder text = new StringBuilder().append(removeQuots(textHeader));
         boolean header = true;
         boolean first = true;
-        String type = null;
         for (String line : lines) {
             line = line.trim();
             if (first) {
@@ -215,8 +274,7 @@ public class CollectorMojo extends AbstractMojo {
                     log.e("malformed header line", line);
                     return;
                 }
-                type = parts[0].trim().toLowerCase();
-                prop.put("category", parts[1].trim());
+                prop.put("category", parts[0].trim());
                 first = false;
             } else {
                 if (header) {
@@ -240,11 +298,7 @@ public class CollectorMojo extends AbstractMojo {
                         + prop.getString("suffix", MCast.toString(cnt, 4)));
         content = null;
         text.append(removeQuots(textFooter));
-        if ("man".equals(type) || "manual".equals(type))
-            createManual(prop, placeholdersManual(prop, text.toString()));
-        else {
-            log.e("wrong type", type);
-        }
+        createManual(prop, placeholdersManual(prop, text.toString()));
     }
 
     private String placeholdersManual(MProperties prop, String text) {
