@@ -280,9 +280,9 @@ public class CollectorMojo extends AbstractMojo {
                     if (!line.startsWith(fileType.blockHeader)) header = false;
                 }
                 if (header) {
-                    String[] parts = line.substring(fileType.blockHeader.length()).split(":", 2);
+                    String[] parts = line.substring(fileType.blockHeader.length()).split(" ", 2);
                     if (parts.length == 2)
-                        prop.setString(parts[0].trim().toLowerCase(), parts[1].trim());
+                        prop.setString(parts[0].trim().toLowerCase(), removeQuots(parts[1].trim()));
                 } else {
                     if (line.startsWith(fileType.blockLine))
                         line = line.substring(fileType.blockLine.length()).trim();

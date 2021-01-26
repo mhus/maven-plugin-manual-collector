@@ -1,4 +1,43 @@
 
+== Purpose
+
+The manual collector is used to collect manual parts out of the source code
+and make it a part of the current documentation.
+
+It is configured by default to handle asciidoc files but could also generate
+other document types.
+
+It searches for source code folders and parse all the source files and
+find manual annotated code blocks. Every block is a part of a category.
+
+== Writing a manual block
+
+By default a code block starts with `/*@<category name>`. This must be the first line
+of the manual block. Followed by the header. Each header entry has the
+syntax `*@<key> <value>`. If no more header is found the rest of the block is used
+as manual text. The trailing `* ` of each line will be removed from the manual.
+
+You can double quote header values and single manual lines. The quotes must be set at the
+beginning and end of the line.
+
+You can use placeholder variables in the manual. The place holders are
+from the header. There are special place holers, starting with a hash
+
+* #date
+* #isodate
+* #hostname
+
+For example
+
+----
+/*@demo
+ *@title Demo Entry
+ *@headerWithSpaces "This header has a space at the end "
+ * == This is ${title}
+ *
+ * Created ${#date}
+ */
+----
 
 == Definition
 
